@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D&D Encounter Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=MedievalSharp&display=swap" rel="stylesheet">
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: #1e1c1a; /* solid dark background to remove blue */
+  color: #f5e6c8;
+  font-family: 'Georgia', serif;
+}
+
+.container {
+  width: 95%;
+  max-width: 1200px;
+  margin: 10px auto;
+  background: #2d2723; /* fully opaque container */
+  padding: 15px;
+  border-radius: 15px;
+  box-shadow: 0 0 20px #000000aa;
+  border: 3px solid #b08d57;
+}
+
+h1, h2 {
+  font-family: 'Cinzel', serif;
+  text-align: center;
+  color: #f0d67c;
+  text-shadow: 2px 2px 4px #000;
+  margin: 10px 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  table-layout: fixed;
+  background: #3b322d;
+  color: #f5e6c8;
+  border: 2px solid #b08d57;
+  box-shadow: inset 0 0 5px #000;
+}
+
+th, td {
+  border: 1px solid #b08d57;
+  padding: 6px 4px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+th {
+  background: linear-gradient(to bottom, #5b473a, #3b322d);
+  color: #f0d67c;
+  font-family: 'MedievalSharp', cursive;
+  text-shadow: 1px 1px 2px #000;
+}
+
+td input {
+  width: 60px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+th:nth-child(2), td:nth-child(2),
+th:nth-child(3), td:nth-child(3) {
+  width: 50px;
+  max-width: 50px;
+  min-width: 50px;
+}
+
+th:nth-child(4), td:nth-child(4) {
+  width: 50px;      /* adjust as needed */
+  max-width: 50px;
+  min-width: 50px;
+}
+
+
+td button {
+  display: block;
+  width: 80%;
+  margin: 2px auto;
+  background: #8b5e3c;
+  color: #f5e6c8;
+  border: 1px solid #b08d57;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+td button:hover {
+  background: #b08d57;
+  color: #3b322d;
+}
+
+select, input {
+  background: #5b473a;
+  color: #f5e6c8;
+  border: 1px solid #b08d57;
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.dice {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.dice button {
+  background: #8b5e3c;
+  color: #f5e6c8;
+  border: 1px solid #b08d57;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.dice button:hover {
+  background: #b08d57;
+  color: #3b322d;
+}
+
+.d20 {
+  font-family: 'MedievalSharp', cursive;
+  display: inline-block;
+  background: #8b5e3c;
+  color: #f5e6c8;
+  padding: 6px 12px;
+  border-radius: 50%;
+  border: 2px solid #b08d57;
+  margin-right: 6px;
+  text-shadow: 1px 1px 2px #000;
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🗡️ D&D Encounter Dashboard 🛡️</h1>
+
+<h2>Players</h2>
+<select id="playerSelect"></select>
+<button id="addPlayerBtn">Add Player</button>
+<table id="playerTable">
+  <thead>
+    <tr>
+      <th>Name</th><th>HP</th><th>AC</th><th>Attack</th><th>Current HP</th>
+      <th>Minor 1</th><th>Minor 2</th>
+      <th>Major 1</th><th>Major 2</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<h2>Enemies</h2>
+<select id="enemySelect"></select>
+<button id="addEnemyBtn">Add Enemy</button>
+<table id="enemyTable">
+  <thead>
+    <tr>
+      <th>Name</th><th>HP</th><th>AC</th><th>Attack</th><th>Current HP</th>
+      <th>Minor 1</th><th>Minor 2</th>
+      <th>Major 1</th><th>Major 2</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<h2>Dice Roller</h2>
+<div class="dice">
+  <span class="d20">🎲</span>
+  <label>Dice: 
+    <select id="diceType">
+      <option value="6">D6</option>
+      <option value="8">D8</option>
+      <option value="10">D10</option>
+      <option value="12">D12</option>
+      <option value="20">D20</option>
+    </select>
+  </label>
+  <button id="rollDiceBtn">Roll</button>
+  <span id="diceResult"></span>
+</div>
+</div>
+
+<script>
+// --- Entities ---
+const playersList = [
+  {name:'Curtis Johnson', hp:5, ac:14, attack:4},
+  {name:'Millie Johnson', hp:5, ac:12, attack:3},
+  {name:'Felcity Weatherhead', hp:5, ac:12, attack:3},
+  {name:'Jesscia Weatherhead', hp:5, ac:12, attack:3}
+];
+const monstersList = [
+  {name:'Rat', hp:2, ac:10, attack:1},
+  {name:'Giant Rat', hp:3, ac:10, attack:1},
+  {name:'King Rat', hp:2, ac:10, attack:1},
+  {name:'Goblin', hp:5, ac:12, attack:2},
+  {name:'Skeleton', hp:4, ac:13, attack:3}
+];
+const minorInjuries = ["Scratched","Bruised","Fatigued","Minor Cut","Sprain"];
+const majorInjuries = ["Crippled Arm L","Crippled Arm R","Blinded Eye","Crippled Leg L","Crippled Leg R","Crushed Chest"];
+
+// --- Load/save ---
+let players = JSON.parse(localStorage.getItem('players')||'[]');
+let enemies = JSON.parse(localStorage.getItem('enemies')||'[]');
+function saveData(){ localStorage.setItem('players',JSON.stringify(players)); localStorage.setItem('enemies',JSON.stringify(enemies)); }
+
+// --- Populate selects ---
+function populateSelects(){
+  const pSelect=document.getElementById('playerSelect'); pSelect.innerHTML='';
+  playersList.forEach((p,i)=>{ const opt=document.createElement('option'); opt.value=i; opt.textContent=p.name; pSelect.appendChild(opt); });
+  const eSelect=document.getElementById('enemySelect'); eSelect.innerHTML='';
+  monstersList.forEach((m,i)=>{ const opt=document.createElement('option'); opt.value=i; opt.textContent=m.name; eSelect.appendChild(opt); });
+}
+
+// --- Render ---
+function renderTable(){
+  function createInjuryCell(entity,type,slot){
+    const td=document.createElement('td'); td.textContent=entity[type][slot]||'';
+    const btn=document.createElement('button');
+    btn.textContent=entity[type][slot]?'Remove':'Add';
+    btn.addEventListener('click',()=>{
+      if(entity[type][slot]) entity[type][slot]='';
+      else entity[type][slot]=(type==='minor'?minorInjuries:majorInjuries)[Math.floor(Math.random()*(type==='minor'?minorInjuries.length:majorInjuries.length))];
+      saveData(); renderTable();
+    });
+    td.appendChild(btn); return td;
+  }
+
+  const playerTbody=document.querySelector('#playerTable tbody'); playerTbody.innerHTML='';
+  players.forEach((p,i)=>{
+    const row=document.createElement('tr');
+    ['name','hp','ac','attack'].forEach(k=>{ const td=document.createElement('td'); td.textContent=p[k]; row.appendChild(td); });
+    const hpTd=document.createElement('td'); const hpInput=document.createElement('input'); hpInput.type='number'; hpInput.value=p.currentHp; hpInput.addEventListener('input',()=>{p.currentHp=parseInt(hpInput.value)||0;saveData();}); hpTd.appendChild(hpInput); row.appendChild(hpTd);
+    for(let j=0;j<2;j++) row.appendChild(createInjuryCell(p,'minor',j));
+    for(let j=0;j<2;j++) row.appendChild(createInjuryCell(p,'major',j));
+    const actTd=document.createElement('td'); const remBtn=document.createElement('button'); remBtn.textContent='Remove'; remBtn.addEventListener('click',()=>{players.splice(i,1);saveData();renderTable();}); actTd.appendChild(remBtn); row.appendChild(actTd);
+    playerTbody.appendChild(row);
+  });
+
+  const enemyTbody=document.querySelector('#enemyTable tbody'); enemyTbody.innerHTML='';
+  enemies.forEach((e,i)=>{
+    const row=document.createElement('tr');
+    ['name','hp','ac','attack'].forEach(k=>{ const td=document.createElement('td'); td.textContent=e[k]; row.appendChild(td); });
+    const hpTd=document.createElement('td'); const hpInput=document.createElement('input'); hpInput.type='number'; hpInput.value=e.currentHp; hpInput.addEventListener('input',()=>{e.currentHp=parseInt(hpInput.value)||0;saveData();}); hpTd.appendChild(hpInput); row.appendChild(hpTd);
+    for(let j=0;j<2;j++) row.appendChild(createInjuryCell(e,'minor',j));
+    for(let j=0;j<2;j++) row.appendChild(createInjuryCell(e,'major',j));
+    const actTd=document.createElement('td'); const remBtn=document.createElement('button'); remBtn.textContent='Remove'; remBtn.addEventListener('click',()=>{enemies.splice(i,1);saveData();renderTable();}); actTd.appendChild(remBtn); row.appendChild(actTd);
+    enemyTbody.appendChild(row);
+  });
+}
+
+// --- Add ---
+document.getElementById('addPlayerBtn').addEventListener('click',()=>{
+  const idx=parseInt(document.getElementById('playerSelect').value); const t=playersList[idx];
+  players.push({...t,currentHp:t.hp,minor:['',''],major:['','']}); saveData(); renderTable();
+});
+document.getElementById('addEnemyBtn').addEventListener('click',()=>{
+  const idx=parseInt(document.getElementById('enemySelect').value); const t=monstersList[idx];
+  enemies.push({...t,currentHp:t.hp,minor:['',''],major:['','']}); saveData(); renderTable();
+});
+
+// --- Dice Roller ---
+document.getElementById('rollDiceBtn').addEventListener('click',()=>{
+  const sides=parseInt(document.getElementById('diceType').value);
+  document.getElementById('diceResult').textContent=`Result: ${Math.floor(Math.random()*sides)+1}`;
+});
+
+// --- Init ---
+populateSelects(); renderTable();
+</script>
+</body>
+</html>
+
