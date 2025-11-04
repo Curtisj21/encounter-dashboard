@@ -360,14 +360,10 @@ document.getElementById('rollDiceBtn').addEventListener('click',()=>{
   },400);
 });
 
-// --- Persistent Timers ---
+// --- Timers ---
 let timers = [null, null, null];
+let remainingTimes = [0, 0, 0];
 let isRunning = [false, false, false];
-let endTimes = JSON.parse(localStorage.getItem('timerEndTimes') || '[null,null,null]');
-
-function saveEndTimes() {
-  localStorage.setItem('timerEndTimes', JSON.stringify(endTimes));
-}
 
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
@@ -375,69 +371,50 @@ function formatTime(seconds) {
   return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
-function updateDisplay(num, secondsLeft) {
+function updateDisplay(num) {
   const display = document.getElementById(`timerDisplay${num}`);
-  if (secondsLeft <= 0) {
-    display.textContent = "⏰ TIME!";
-    display.classList.add('done');
-  } else {
-    display.textContent = formatTime(secondsLeft);
-    display.classList.remove('done');
-  }
+  display.textContent = formatTime(remainingTimes[num - 1]);
+  display.classList.remove('done');
 }
 
 function startTimer(num) {
+  if (isRunning[num - 1]) return;
   const min = parseInt(document.getElementById(`t${num}Minutes`).value) || 0;
   const sec = parseInt(document.getElementById(`t${num}Seconds`).value) || 0;
-
-  if (isRunning[num - 1]) return;
-
-  if (!endTimes[num - 1]) {
-    const totalSeconds = min * 60 + sec;
-    if (totalSeconds <= 0) return;
-    endTimes[num - 1] = Date.now() + totalSeconds * 1000;
-    saveEndTimes();
-  }
+  if (remainingTimes[num - 1] === 0) remainingTimes[num - 1] = min * 60 + sec;
+  if (remainingTimes[num - 1] <= 0) return;
 
   isRunning[num - 1] = true;
-
   timers[num - 1] = setInterval(() => {
-    const secondsLeft = Math.floor((endTimes[num - 1] - Date.now()) / 1000);
-    updateDisplay(num, secondsLeft);
-    if (secondsLeft <= 0) {
+    remainingTimes[num - 1]--;
+    updateDisplay(num);
+    if (remainingTimes[num - 1] <= 0) {
       clearInterval(timers[num - 1]);
       isRunning[num - 1] = false;
-      endTimes[num - 1] = null;
-      saveEndTimes();
+      const display = document.getElementById(`timerDisplay${num}`);
+      display.textContent = "⏰ TIME!";
+      display.classList.add('done');
     }
   }, 1000);
 }
 
 function pauseTimer(num) {
-  if (!endTimes[num - 1]) return;
-  const secondsLeft = Math.max(0, Math.floor((endTimes[num - 1] - Date.now()) / 1000));
-  endTimes[num - 1] = secondsLeft > 0 ? Date.now() + secondsLeft * 1000 : null;
   clearInterval(timers[num - 1]);
   isRunning[num - 1] = false;
-  saveEndTimes();
 }
 
 function resetTimer(num) {
   clearInterval(timers[num - 1]);
   isRunning[num - 1] = false;
-  endTimes[num - 1] = null;
-  saveEndTimes();
-  updateDisplay(num, 0);
+  remainingTimes[num - 1] = 0;
+  updateDisplay(num);
 }
 
-function resumeTimers() {
-  end
-  
 // --- Init ---
-populateSelects();
-renderTable();
-resumeTimers();
+populateSelects(); renderTable();
 </script>
+</body>
+</html>
 
 
 
