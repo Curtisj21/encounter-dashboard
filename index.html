@@ -292,7 +292,10 @@ const majorInjuries = ["Crippled Arm L","Crippled Arm R","Blinded Eye","Crippled
 // --- Load/save ---
 let players = JSON.parse(localStorage.getItem('players')||'[]');
 let enemies = JSON.parse(localStorage.getItem('enemies')||'[]');
-function saveData(){ localStorage.setItem('players',JSON.stringify(players)); localStorage.setItem('enemies',JSON.stringify(enemies)); }
+function saveData(){ 
+  localStorage.setItem('players',JSON.stringify(players)); 
+  localStorage.setItem('enemies',JSON.stringify(enemies)); 
+}
 
 // --- Populate selects ---
 function populateSelects(){
@@ -362,7 +365,8 @@ document.getElementById('rollDiceBtn').addEventListener('click',()=>{
 
 // --- Timers ---
 let timers = [null, null, null];
-let remainingTimes = [0, 0, 0];
+let endTimes = [null, null, null]; // store future timestamps
+let remainingTimes = [0, 0, 0];    // used for pause/resume
 let isRunning = [false, false, false];
 
 function formatTime(seconds) {
@@ -371,51 +375,81 @@ function formatTime(seconds) {
   return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
-function updateDisplay(num) {
+function updateDisplay(num, remaining) {
   const display = document.getElementById(`timerDisplay${num}`);
-  display.textContent = formatTime(remainingTimes[num - 1]);
+  display.textContent = formatTime(remaining);
   display.classList.remove('done');
 }
 
 function startTimer(num) {
   if (isRunning[num - 1]) return;
+
   const min = parseInt(document.getElementById(`t${num}Minutes`).value) || 0;
   const sec = parseInt(document.getElementById(`t${num}Seconds`).value) || 0;
-  if (remainingTimes[num - 1] === 0) remainingTimes[num - 1] = min * 60 + sec;
-  if (remainingTimes[num - 1] <= 0) return;
+  const now = Date.now();
+
+  if (!endTimes[num - 1]) {
+    endTimes[num - 1] = now + (min * 60 + sec) * 1000;
+  }
 
   isRunning[num - 1] = true;
   timers[num - 1] = setInterval(() => {
-    remainingTimes[num - 1]--;
-    updateDisplay(num);
-    if (remainingTimes[num - 1] <= 0) {
+    const remaining = Math.max(0, Math.round((endTimes[num - 1] - Date.now()) / 1000));
+    updateDisplay(num, remaining);
+    if (remaining <= 0) {
       clearInterval(timers[num - 1]);
       isRunning[num - 1] = false;
+      endTimes[num - 1] = null;
       const display = document.getElementById(`timerDisplay${num}`);
       display.textContent = "⏰ TIME!";
       display.classList.add('done');
     }
   }, 1000);
+  saveTimers();
 }
 
 function pauseTimer(num) {
+  if (!isRunning[num - 1]) return;
   clearInterval(timers[num - 1]);
   isRunning[num - 1] = false;
+
+  const remaining = Math.max(0, Math.round((endTimes[num - 1] - Date.now()) / 1000));
+  endTimes[num - 1] = null;
+  remainingTimes[num - 1] = remaining;
+  updateDisplay(num, remaining);
+  saveTimers();
 }
 
 function resetTimer(num) {
   clearInterval(timers[num - 1]);
   isRunning[num - 1] = false;
   remainingTimes[num - 1] = 0;
-  updateDisplay(num);
+  endTimes[num - 1] = null;
+  updateDisplay(num, 0);
+  saveTimers();
+}
+
+// --- Persist timers to localStorage ---
+function saveTimers() {
+  localStorage.setItem('endTimes', JSON.stringify(endTimes));
+}
+
+function loadTimers() {
+  const saved = JSON.parse(localStorage.getItem('endTimes') || '[null,null,null]');
+  const now = Date.now();
+  saved.forEach((t, i) => {
+    if (t && t > now) {
+      endTimes[i] = t;
+      startTimer(i + 1);
+    }
+  });
 }
 
 // --- Init ---
-populateSelects(); renderTable();
+populateSelects();
+renderTable();
+loadTimers();
 </script>
-</body>
-</html>
-
 
 
 
