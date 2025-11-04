@@ -10,7 +10,7 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background-color: #1e1c1a; /* solid dark background to remove blue */
+  background-color: #1e1c1a;
   color: #f5e6c8;
   font-family: 'Georgia', serif;
 }
@@ -19,7 +19,7 @@ html, body {
   width: 95%;
   max-width: 1200px;
   margin: 10px auto;
-  background: #2d2723; /* fully opaque container */
+  background: #2d2723;
   padding: 15px;
   border-radius: 15px;
   box-shadow: 0 0 20px #000000aa;
@@ -66,20 +66,6 @@ td input {
   box-sizing: border-box;
   text-align: center;
 }
-
-th:nth-child(2), td:nth-child(2),
-th:nth-child(3), td:nth-child(3) {
-  width: 50px;
-  max-width: 50px;
-  min-width: 50px;
-}
-
-th:nth-child(4), td:nth-child(4) {
-  width: 50px;      /* adjust as needed */
-  max-width: 50px;
-  min-width: 50px;
-}
-
 
 td button {
   display: block;
@@ -136,6 +122,69 @@ select, input {
   margin-right: 6px;
   text-shadow: 1px 1px 2px #000;
 }
+
+/* --- Timer Styles --- */
+#timers {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.timer {
+  background: #3b322d;
+  border: 2px solid #b08d57;
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  box-shadow: inset 0 0 5px #000;
+}
+
+.timer label {
+  font-family: 'MedievalSharp', cursive;
+  color: #f0d67c;
+}
+
+.timer input {
+  width: 50px;
+  text-align: center;
+}
+
+.timer button {
+  background: #8b5e3c;
+  color: #f5e6c8;
+  border: 1px solid #b08d57;
+  border-radius: 5px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.timer button:hover {
+  background: #b08d57;
+  color: #3b322d;
+}
+
+.timer span {
+  font-family: 'Cinzel', serif;
+  font-size: 1.2em;
+  color: #f0d67c;
+  text-shadow: 1px 1px 2px #000;
+  width: 90px;
+  text-align: center;
+}
+
+.timer.done {
+  color: #ff4444;
+  font-weight: bold;
+  animation: flash 1s infinite alternate;
+}
+
+@keyframes flash {
+  0% { color: #ff4444; }
+  100% { color: #f0d67c; }
+}
 </style>
 </head>
 <body>
@@ -186,6 +235,39 @@ select, input {
   </label>
   <button id="rollDiceBtn">Roll</button>
   <span id="diceResult"></span>
+</div>
+
+<h2>Timers</h2>
+<div id="timers">
+  <div class="timer">
+    <label>Timer 1:</label>
+    <input type="number" id="t1Minutes" placeholder="min" min="0" value="0">
+    <input type="number" id="t1Seconds" placeholder="sec" min="0" max="59" value="0">
+    <button onclick="startTimer(1)">Start</button>
+    <button onclick="pauseTimer(1)">Pause</button>
+    <button onclick="resetTimer(1)">Reset</button>
+    <span id="timerDisplay1">00:00</span>
+  </div>
+
+  <div class="timer">
+    <label>Timer 2:</label>
+    <input type="number" id="t2Minutes" placeholder="min" min="0" value="0">
+    <input type="number" id="t2Seconds" placeholder="sec" min="0" max="59" value="0">
+    <button onclick="startTimer(2)">Start</button>
+    <button onclick="pauseTimer(2)">Pause</button>
+    <button onclick="resetTimer(2)">Reset</button>
+    <span id="timerDisplay2">00:00</span>
+  </div>
+
+  <div class="timer">
+    <label>Timer 3:</label>
+    <input type="number" id="t3Minutes" placeholder="min" min="0" value="0">
+    <input type="number" id="t3Seconds" placeholder="sec" min="0" max="59" value="0">
+    <button onclick="startTimer(3)">Start</button>
+    <button onclick="pauseTimer(3)">Pause</button>
+    <button onclick="resetTimer(3)">Reset</button>
+    <span id="timerDisplay3">00:00</span>
+  </div>
 </div>
 </div>
 
@@ -238,7 +320,7 @@ function renderTable(){
   players.forEach((p,i)=>{
     const row=document.createElement('tr');
     ['name','hp','ac','attack'].forEach(k=>{ const td=document.createElement('td'); td.textContent=p[k]; row.appendChild(td); });
-    const hpTd=document.createElement('td'); const hpInput=document.createElement('input'); hpInput.type='number'; hpInput.value=p.currentHp; hpInput.addEventListener('input',()=>{p.currentHp=parseInt(hpInput.value)||0;saveData();}); hpTd.appendChild(hpInput); row.appendChild(hpTd);
+    const hpTd=document.createElement('td'); const hpInput=document.createElement('input'); hpInput.type='number'; hpInput.value=p.currentHp; hpInput.addEventListener('change',()=>{p.currentHp=parseInt(hpInput.value)||0;saveData();}); hpTd.appendChild(hpInput); row.appendChild(hpTd);
     for(let j=0;j<2;j++) row.appendChild(createInjuryCell(p,'minor',j));
     for(let j=0;j<2;j++) row.appendChild(createInjuryCell(p,'major',j));
     const actTd=document.createElement('td'); const remBtn=document.createElement('button'); remBtn.textContent='Remove'; remBtn.addEventListener('click',()=>{players.splice(i,1);saveData();renderTable();}); actTd.appendChild(remBtn); row.appendChild(actTd);
@@ -249,7 +331,7 @@ function renderTable(){
   enemies.forEach((e,i)=>{
     const row=document.createElement('tr');
     ['name','hp','ac','attack'].forEach(k=>{ const td=document.createElement('td'); td.textContent=e[k]; row.appendChild(td); });
-    const hpTd=document.createElement('td'); const hpInput=document.createElement('input'); hpInput.type='number'; hpInput.value=e.currentHp; hpInput.addEventListener('input',()=>{e.currentHp=parseInt(hpInput.value)||0;saveData();}); hpTd.appendChild(hpInput); row.appendChild(hpTd);
+    const hpTd=document.createElement('td'); const hpInput=document.createElement('input'); hpInput.type='number'; hpInput.value=e.currentHp; hpInput.addEventListener('change',()=>{e.currentHp=parseInt(hpInput.value)||0;saveData();}); hpTd.appendChild(hpInput); row.appendChild(hpTd);
     for(let j=0;j<2;j++) row.appendChild(createInjuryCell(e,'minor',j));
     for(let j=0;j<2;j++) row.appendChild(createInjuryCell(e,'major',j));
     const actTd=document.createElement('td'); const remBtn=document.createElement('button'); remBtn.textContent='Remove'; remBtn.addEventListener('click',()=>{enemies.splice(i,1);saveData();renderTable();}); actTd.appendChild(remBtn); row.appendChild(actTd);
@@ -270,12 +352,69 @@ document.getElementById('addEnemyBtn').addEventListener('click',()=>{
 // --- Dice Roller ---
 document.getElementById('rollDiceBtn').addEventListener('click',()=>{
   const sides=parseInt(document.getElementById('diceType').value);
-  document.getElementById('diceResult').textContent=`Result: ${Math.floor(Math.random()*sides)+1}`;
+  const resultElem=document.getElementById('diceResult');
+  resultElem.textContent="Rolling...";
+  setTimeout(()=>{
+    const roll=Math.floor(Math.random()*sides)+1;
+    resultElem.textContent=`🎲 Result: ${roll}`;
+  },400);
 });
+
+// --- Timers ---
+let timers = [null, null, null];
+let remainingTimes = [0, 0, 0];
+let isRunning = [false, false, false];
+
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function updateDisplay(num) {
+  const display = document.getElementById(`timerDisplay${num}`);
+  display.textContent = formatTime(remainingTimes[num - 1]);
+  display.classList.remove('done');
+}
+
+function startTimer(num) {
+  if (isRunning[num - 1]) return;
+  const min = parseInt(document.getElementById(`t${num}Minutes`).value) || 0;
+  const sec = parseInt(document.getElementById(`t${num}Seconds`).value) || 0;
+  if (remainingTimes[num - 1] === 0) remainingTimes[num - 1] = min * 60 + sec;
+  if (remainingTimes[num - 1] <= 0) return;
+
+  isRunning[num - 1] = true;
+  timers[num - 1] = setInterval(() => {
+    remainingTimes[num - 1]--;
+    updateDisplay(num);
+    if (remainingTimes[num - 1] <= 0) {
+      clearInterval(timers[num - 1]);
+      isRunning[num - 1] = false;
+      const display = document.getElementById(`timerDisplay${num}`);
+      display.textContent = "⏰ TIME!";
+      display.classList.add('done');
+    }
+  }, 1000);
+}
+
+function pauseTimer(num) {
+  clearInterval(timers[num - 1]);
+  isRunning[num - 1] = false;
+}
+
+function resetTimer(num) {
+  clearInterval(timers[num - 1]);
+  isRunning[num - 1] = false;
+  remainingTimes[num - 1] = 0;
+  updateDisplay(num);
+}
 
 // --- Init ---
 populateSelects(); renderTable();
 </script>
 </body>
 </html>
+
+
 
